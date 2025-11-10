@@ -321,7 +321,7 @@ class _DadosAlunosDialogState extends State<DadosAlunosDialog> {
                                   ),
                                   const SizedBox(height: 12),
 
-                                  // Quantidades de Refeição
+                                  // Tipo  de Refeição
                                   const Text(
                                     'Quantidade de alunos que fazem refeição:',
                                     style: TextStyle(

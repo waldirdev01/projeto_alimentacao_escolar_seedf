@@ -16,7 +16,7 @@ class FirestoreHelper {
   factory FirestoreHelper() => _instance;
   FirestoreHelper._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   // Coleções
   static const String _anosLetivosCollection = 'anos_letivos';
@@ -31,7 +31,7 @@ class FirestoreHelper {
 
   // Inicializar dados padrão
   Future<void> initializeDefaultData() async {
-    // Verificar e inserir quantidades de refeição
+    // Verificar e inserir Tipo  de Refeição
     final quantidadesSnapshot = await _firestore
         .collection(_quantidadesRefeicaoCollection)
         .get();
@@ -108,7 +108,7 @@ class FirestoreHelper {
     await batch.commit();
   }
 
-  // Quantidades de Refeição
+  // Tipo  de Refeição
   Future<List<QuantidadeRefeicao>> getQuantidadesRefeicao() async {
     final snapshot = await _firestore
         .collection(_quantidadesRefeicaoCollection)
@@ -288,6 +288,13 @@ class FirestoreHelper {
         .get();
     return snapshot.docs
         .map((doc) => MemoriaCalculo.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<List<MemoriaCalculo>> getMemoriasCalculoDisponibilizadas() async {
+    final todas = await getMemoriasCalculo();
+    return todas
+        .where((memoria) => memoria.disponibilizadaParaDiae)
         .toList();
   }
 

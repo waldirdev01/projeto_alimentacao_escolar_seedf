@@ -90,9 +90,9 @@ class DiaeHomeScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: 12),
-                        // Card de Quantidades de Refeição
+                        // Card de Tipo  de Refeição
                         _ConfigCard(
-                          title: 'Quantidades de Refeição',
+                          title: 'Tipo  de Refeição',
                           description: 'Gerenciar tipos de refeição',
                           icon: Icons.restaurant,
                           color: Colors.orange,

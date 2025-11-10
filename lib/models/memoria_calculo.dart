@@ -45,6 +45,8 @@ class MemoriaCalculo {
   // Dados de alunos "congelados" no momento da criação da memória
   // Estrutura: regiaoId -> modalidade -> quantidadeRefeicaoId -> número de alunos
   final Map<String, Map<String, Map<String, int>>> dadosAlunosCongelados;
+  // Indica se a memória foi disponibilizada para a DIAE gerenciar aquisições
+  final bool disponibilizadaParaDiae;
 
   MemoriaCalculo({
     required this.id,
@@ -63,6 +65,7 @@ class MemoriaCalculo {
     this.frequenciaPorProduto = const {},
     Map<String, StatusProdutoMemoria>? statusProdutos,
     this.dadosAlunosCongelados = const {},
+    this.disponibilizadaParaDiae = false,
   }) : statusProdutos = statusProdutos ?? {};
 
   MemoriaCalculo copyWith({
@@ -82,6 +85,7 @@ class MemoriaCalculo {
     Map<String, Map<String, double>>? frequenciaPorProduto,
     Map<String, StatusProdutoMemoria>? statusProdutos,
     Map<String, Map<String, Map<String, int>>>? dadosAlunosCongelados,
+    bool? disponibilizadaParaDiae,
   }) {
     return MemoriaCalculo(
       id: id ?? this.id,
@@ -104,6 +108,8 @@ class MemoriaCalculo {
       statusProdutos: statusProdutos ?? this.statusProdutos,
       dadosAlunosCongelados:
           dadosAlunosCongelados ?? this.dadosAlunosCongelados,
+      disponibilizadaParaDiae:
+          disponibilizadaParaDiae ?? this.disponibilizadaParaDiae,
     );
   }
 
@@ -195,6 +201,7 @@ class MemoriaCalculo {
           ),
         ),
       ),
+      'disponibilizadaParaDiae': disponibilizadaParaDiae,
     };
   }
 
@@ -283,6 +290,7 @@ class MemoriaCalculo {
               ),
             ),
           ),
+      disponibilizadaParaDiae: json['disponibilizadaParaDiae'] as bool? ?? false,
     );
   }
 }

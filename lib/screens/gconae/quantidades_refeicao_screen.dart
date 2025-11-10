@@ -124,7 +124,7 @@ class _QuantidadesRefeicaoScreenState extends State<QuantidadesRefeicaoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quantidades de Refeição'),
+        title: const Text('Tipo  de Refeição'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

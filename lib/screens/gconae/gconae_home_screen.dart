@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../database/firestore_helper.dart';
 import '../../models/ano_letivo.dart';
-import 'ano_letivo_detail_screen.dart';
+import 'ano_letivo_overview_screen.dart';
 import 'produtos_screen.dart';
 
 class GconaeHomeScreen extends StatefulWidget {
@@ -203,7 +203,7 @@ class _GconaeHomeScreenState extends State<GconaeHomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AnoLetivoDetailScreen(anoLetivo: ano),
+                                    AnoLetivoOverviewScreen(anoLetivo: ano),
                               ),
                             );
                           },

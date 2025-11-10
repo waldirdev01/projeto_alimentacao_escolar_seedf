@@ -256,7 +256,7 @@ class _EditarProdutoDialogState extends State<EditarProdutoDialog> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Text(
-          'Nenhuma Tipo de refeição ativa cadastrada.\nCadastre quantidades de refeição primeiro.',
+          'Nenhuma Tipo de refeição ativa cadastrada.\nCadastre Tipo  de Refeição primeiro.',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey),
         ),

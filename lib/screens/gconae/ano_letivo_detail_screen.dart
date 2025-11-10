@@ -277,7 +277,7 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
 
             totalMatriculados += matriculadosModalidade;
 
-            // Somar todas as quantidades de refeição
+            // Somar todas as Tipo  de Refeição
             for (final qtdEntry in dadosModalidade.entries) {
               final qtdAlunos = qtdEntry.value;
               final qtdKey = qtdEntry.key;
@@ -291,7 +291,7 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
           }
         }
 
-        // Criar mapa de totais incluindo todas as quantidades de refeição
+        // Criar mapa de totais incluindo todas as Tipo  de Refeição
         final Map<String, int> totais = {
           'matriculados': totalMatriculados,
           'total_refeicoes': totalRefeicoes,
@@ -458,7 +458,7 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
 
           debugInfo += 'Modalidade: $modalidade\n';
           debugInfo += 'Matriculados: ${dadosModalidade.matriculados}\n';
-          debugInfo += 'Quantidades de Refeição:\n';
+          debugInfo += 'Tipo  de Refeição:\n';
 
           for (final qtdEntry in dadosModalidade.quantidadeRefeicoes.entries) {
             debugInfo += '  ${qtdEntry.key}: ${qtdEntry.value} alunos\n';
@@ -689,11 +689,63 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
                                           color: Colors.grey[600],
                                         ),
                                       ),
+                                      if (memoria.disponibilizadaParaDiae)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 6),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.cloud_done,
+                                                size: 16,
+                                                color: Colors.green[600],
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Disponibilizada para a DIAE',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.green[700],
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                     ],
                                   ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          memoria.disponibilizadaParaDiae
+                                              ? Icons.cloud_done
+                                              : Icons.cloud_upload,
+                                          size: 20,
+                                        ),
+                                        color: memoria.disponibilizadaParaDiae
+                                            ? Colors.green[600]
+                                            : Colors.grey[600],
+                                        tooltip: memoria
+                                                .disponibilizadaParaDiae
+                                            ? 'Remover da lista da DIAE'
+                                            : 'Disponibilizar para a DIAE',
+                                        onPressed: () =>
+                                            _alternarDisponibilidadeMemoria(
+                                          memoria,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.visibility,
+                                          size: 20,
+                                        ),
+                                        tooltip:
+                                            'Visualizar memória de cálculo',
+                                        onPressed: () =>
+                                            _visualizarMemoriaCalculo(memoria),
+                                      ),
                                       IconButton(
                                         icon: const Icon(Icons.print, size: 20),
                                         color: Colors.purple,
@@ -1131,6 +1183,7 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
         numero: proximoNumero,
         titulo: novoTitulo,
         dataCriacao: DateTime.now(),
+        disponibilizadaParaDiae: false,
       );
 
       final db = FirestoreHelper();
@@ -1155,6 +1208,56 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
         ).showSnackBar(SnackBar(content: Text('Erro ao duplicar memória: $e')));
       }
     }
+  }
+
+  Future<void> _alternarDisponibilidadeMemoria(
+    MemoriaCalculo memoria,
+  ) async {
+    final novoValor = !memoria.disponibilizadaParaDiae;
+    try {
+      final db = FirestoreHelper();
+      await db.saveMemoriaCalculo(
+        memoria.copyWith(disponibilizadaParaDiae: novoValor),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        memoriasCalculo = memoriasCalculo
+            .map(
+              (m) => m.id == memoria.id
+                  ? m.copyWith(disponibilizadaParaDiae: novoValor)
+                  : m,
+            )
+            .toList();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            novoValor
+                ? 'Memória disponibilizada para a DIAE.'
+                : 'Memória removida da lista da DIAE.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar disponibilidade: $e')),
+      );
+    }
+  }
+
+  void _visualizarMemoriaCalculo(MemoriaCalculo memoria) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Visualização da Memória ${memoria.numero} estará disponível em breve.',
+        ),
+      ),
+    );
   }
 }
 

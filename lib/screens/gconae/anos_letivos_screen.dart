@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../database/firestore_helper.dart';
 import '../../models/ano_letivo.dart';
 import '../../models/distribuicao.dart';
+import 'ano_letivo_overview_screen.dart';
 import 'widgets/criar_ano_dialog.dart';
 
 class AnosLetivosScreen extends StatefulWidget {
@@ -158,7 +159,18 @@ class _AnosLetivosScreenState extends State<AnosLetivosScreen> {
               itemCount: anosLetivos.length,
               itemBuilder: (context, index) {
                 final ano = anosLetivos[index];
-                return _AnoLetivoCard(anoLetivo: ano);
+                return _AnoLetivoCard(
+                  anoLetivo: ano,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AnoLetivoOverviewScreen(
+                          anoLetivo: ano,
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
             ),
     );
@@ -167,59 +179,71 @@ class _AnosLetivosScreenState extends State<AnosLetivosScreen> {
 
 class _AnoLetivoCard extends StatelessWidget {
   final AnoLetivo anoLetivo;
+  final VoidCallback onTap;
 
-  const _AnoLetivoCard({required this.anoLetivo});
+  const _AnoLetivoCard({
+    required this.anoLetivo,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 24,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const Spacer(),
-                if (anoLetivo.ativo)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Ativo',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Colors.green[800],
-                        fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 24,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const Spacer(),
+                  if (anoLetivo.ativo)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Ativo',
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.green[800],
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${anoLetivo.ano}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Ano Letivo',
-              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${anoLetivo.ano}',
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Ano Letivo',
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

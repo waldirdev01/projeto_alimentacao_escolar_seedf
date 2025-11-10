@@ -35,7 +35,7 @@ class _ProcessosAquisicaoScreenState extends State<ProcessosAquisicaoScreen> {
     try {
       final db = FirestoreHelper();
       final anosDb = await db.getAnosLetivos();
-      final todasMemorias = await db.getMemoriasCalculo();
+      final todasMemorias = await db.getMemoriasCalculoDisponibilizadas();
       final todosProcessos = await db.getProcessosAquisicao();
 
       // Agrupar memórias por ano

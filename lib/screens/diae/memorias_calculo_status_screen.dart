@@ -46,7 +46,7 @@ class _MemoriasCalculoStatusScreenState
     try {
       final db = FirestoreHelper();
       final anosDb = await db.getAnosLetivos();
-      final todasMemorias = await db.getMemoriasCalculo();
+      final todasMemorias = await db.getMemoriasCalculoDisponibilizadas();
       final produtosDb = await db.getProdutos();
       final quantidadesDb = await db.getQuantidadesRefeicao();
       final regioesDb = await db.getRegioes();
