@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'package:intl/intl.dart';
+
 import '../../../database/firestore_helper.dart';
+import '../../../models/quadro_tecnico_descritivo.dart';
 import '../../../models/processo_aquisicao.dart';
+import '../../../models/regiao.dart';
 import '../memorias_calculo_status_screen.dart';
 
 class ProcessoAquisicaoDetailDialog extends StatefulWidget {
@@ -18,6 +22,8 @@ class _ProcessoAquisicaoDetailDialogState
     extends State<ProcessoAquisicaoDetailDialog> {
   late ProcessoAquisicao _processo;
   bool _carregando = true;
+  List<Regiao> _regioes = [];
+  List<QuadroTecnicoDescritivo> _quadrosTecnicos = [];
 
   @override
   void initState() {
@@ -27,9 +33,29 @@ class _ProcessoAquisicaoDetailDialogState
   }
 
   Future<void> _carregarDados() async {
-    setState(() {
-      _carregando = false;
-    });
+    setState(() => _carregando = true);
+
+    try {
+      final db = FirestoreHelper();
+      final regioesDb = await db.getRegioes();
+      final quadros = await db.getQuadrosTecnicosPorProcesso(_processo.id);
+
+      if (!mounted) return;
+
+      setState(() {
+        _regioes = regioesDb;
+        _quadrosTecnicos = quadros;
+        _carregando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _carregando = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar dados do processo: $e')),
+      );
+    }
   }
 
   Future<void> _avancarFase() async {
@@ -340,107 +366,146 @@ class _ProcessoAquisicaoDetailDialogState
                   const SizedBox(height: 16),
 
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: FaseProcessoAquisicao.values.length,
-                      itemBuilder: (context, index) {
-                        final fase = FaseProcessoAquisicao.values[index];
-                        final dadosFase = _processo.fases[fase];
-                        final isAtual = fase == _processo.faseAtual;
-                        final isConcluida = dadosFase?.concluida ?? false;
+                    child: ListView(
+                      children: [
+                        ...FaseProcessoAquisicao.values.map(
+                          (fase) {
+                            final dadosFase = _processo.fases[fase];
+                            final isAtual = fase == _processo.faseAtual;
+                            final isConcluida = dadosFase?.concluida ?? false;
 
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          color: isAtual ? Colors.blue[50] : null,
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isConcluida
-                                  ? Colors.green
-                                  : isAtual
-                                  ? Colors.blue
-                                  : Colors.grey,
-                              child: Icon(
-                                isConcluida
-                                    ? Icons.check
-                                    : isAtual
-                                    ? Icons.play_arrow
-                                    : Icons.radio_button_unchecked,
-                                color: Colors.white,
-                              ),
-                            ),
-                            title: Text(
-                              fase.displayName,
-                              style: TextStyle(
-                                fontWeight: isAtual
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(fase.descricao),
-                                if (dadosFase?.observacoes != null &&
-                                    dadosFase!.observacoes!.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      'Obs: ${dadosFase.observacoes!}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              color: isAtual ? Colors.blue[50] : null,
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isConcluida
+                                      ? Colors.green
+                                      : isAtual
+                                          ? Colors.blue
+                                          : Colors.grey,
+                                  child: Icon(
+                                    isConcluida
+                                        ? Icons.check
+                                        : isAtual
+                                            ? Icons.play_arrow
+                                            : Icons.radio_button_unchecked,
+                                    color: Colors.white,
                                   ),
-                                if (dadosFase?.dataConclusao != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      'Concluído em: ${_formatarData(dadosFase!.dataConclusao!)}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, size: 18),
-                                  onPressed: () => _editarObservacoesFase(fase),
-                                  tooltip: 'Editar Observações',
-                                  color: Colors.blue,
                                 ),
-                                if (isAtual &&
-                                    _processo.status ==
-                                        StatusProcessoAquisicao.ativo)
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.arrow_forward,
-                                      size: 18,
-                                    ),
-                                    onPressed: _avancarFase,
-                                    tooltip: 'Avançar Fase',
-                                    color: Colors.green,
+                                title: Text(
+                                  fase.displayName,
+                                  style: TextStyle(
+                                    fontWeight: isAtual
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
-                                if (fase == FaseProcessoAquisicao.publicado &&
-                                    (isConcluida || isAtual))
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.visibility,
-                                      size: 18,
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(fase.descricao),
+                                    if (dadosFase?.observacoes != null &&
+                                        dadosFase!.observacoes!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          'Obs: ${dadosFase.observacoes!}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ),
+                                    if (dadosFase?.dataConclusao != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          'Concluído em: ${_formatarData(dadosFase!.dataConclusao!)}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      onPressed: () =>
+                                          _editarObservacoesFase(fase),
+                                      tooltip: 'Editar Observações',
+                                      color: Colors.blue,
                                     ),
-                                    onPressed: _verStatusProdutos,
-                                    tooltip: 'Ver Status dos Produtos',
-                                    color: Colors.purple,
-                                  ),
-                              ],
+                                    if (isAtual &&
+                                        _processo.status ==
+                                            StatusProcessoAquisicao.ativo)
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.arrow_forward,
+                                          size: 18,
+                                        ),
+                                        onPressed: _avancarFase,
+                                        tooltip: 'Avançar Fase',
+                                        color: Colors.green,
+                                      ),
+                                    if (fase ==
+                                            FaseProcessoAquisicao.publicado &&
+                                        (isConcluida || isAtual))
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.visibility,
+                                          size: 18,
+                                        ),
+                                        onPressed: _verStatusProdutos,
+                                        tooltip: 'Ver Status dos Produtos',
+                                        color: Colors.purple,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        if (_quadrosTecnicos.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Quadros Técnicos Descritivos (QTD)',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(height: 8),
+                          ..._quadrosTecnicos.map(
+                            (qtd) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _ResumoQtdWidget(
+                                qtd: qtd,
+                                regioes: _regioes,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.amber[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amber[200]!),
+                            ),
+                            child: const Text(
+                              'Nenhum QTD registrado ainda. A GPAE é responsável por registrar os quadros técnicos a partir desta fase.',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 
@@ -496,5 +561,264 @@ class _ProcessoAquisicaoDetailDialogState
 
   String _formatarData(DateTime data) {
     return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+  }
+}
+
+class _ResumoQtdWidget extends StatelessWidget {
+  final QuadroTecnicoDescritivo qtd;
+  final List<Regiao> regioes;
+
+  const _ResumoQtdWidget({
+    required this.qtd,
+    required this.regioes,
+  });
+
+  static final NumberFormat _currencyFormat =
+      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
+  @override
+  Widget build(BuildContext context) {
+    final mapaRegioes = {for (final regiao in regioes) regiao.id: regiao.nome};
+    final totalQtd = qtd.fornecedores.fold<double>(
+      0,
+      (valor, fornecedor) => valor + fornecedor.subtotalValor,
+    );
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${qtd.tipoAta.displayName} • Número: ${qtd.numeroAtaJulgamento} • Fonte: ${qtd.fonte}',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 12),
+            ...qtd.fornecedores.map(
+              (fornecedor) => _TabelaFornecedor(
+                fornecedor: fornecedor,
+                mapaRegioes: mapaRegioes,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Total do QTD: ${_currencyFormat.format(totalQtd)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TabelaFornecedor extends StatelessWidget {
+  final FornecedorQtd fornecedor;
+  final Map<String, String> mapaRegioes;
+
+  static final NumberFormat _currencyFormat =
+      NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  static final NumberFormat _quantityFormat =
+      NumberFormat('#,##0.000', 'pt_BR');
+
+  const _TabelaFornecedor({
+    required this.fornecedor,
+    required this.mapaRegioes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final List<TableRow> linhas = [
+      TableRow(
+        decoration: BoxDecoration(color: Colors.grey[200]),
+        children: [
+          _HeaderCell('Região'),
+          _HeaderCell('Item'),
+          _HeaderCell('Produto'),
+          _HeaderCell('Valor unitário (R\$)'),
+          _HeaderCell('Cota Principal (kg)'),
+          _HeaderCell('Cota Reservada (kg)'),
+          _HeaderCell('Quantidade total (kg)'),
+          _HeaderCell('Valor total (R\$)'),
+        ],
+      ),
+    ];
+
+    // Coletar todas as regiões únicas
+    final Set<String> regioesUnicas = {};
+    for (final item in fornecedor.itens) {
+      regioesUnicas.addAll(item.cotaPrincipalPorRegiaoKg.keys);
+      regioesUnicas.addAll(item.cotaReservadaPorRegiaoKg.keys);
+    }
+    final regioesOrdenadas = regioesUnicas.toList()
+      ..sort((a, b) => (mapaRegioes[a] ?? a).compareTo(mapaRegioes[b] ?? b));
+
+    for (final regiaoId in regioesOrdenadas) {
+      for (final item in fornecedor.itens) {
+        final cotaPrincipal = item.cotaPrincipalPorRegiaoKg[regiaoId] ?? 0.0;
+        final cotaReservada = item.cotaReservadaPorRegiaoKg[regiaoId] ?? 0.0;
+        final quantidadeTotalRegiao = cotaPrincipal + cotaReservada;
+
+        if (quantidadeTotalRegiao > 0) {
+          linhas.add(
+            TableRow(
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFE0E0E0)),
+                ),
+              ),
+              children: [
+                _BodyCell(mapaRegioes[regiaoId] ?? regiaoId),
+                _BodyCell('Item ${item.numeroItemEdital}'),
+                _BodyCell(item.produtoNome),
+                _BodyCell(_currencyFormat.format(item.valorUnitarioReais)),
+                _BodyCell(_quantityFormat.format(cotaPrincipal)),
+                _BodyCell(_quantityFormat.format(cotaReservada)),
+                _BodyCell(_quantityFormat.format(item.quantidadeTotalKg)),
+                _BodyCell(_currencyFormat.format(item.valorTotalReais)),
+              ],
+            ),
+          );
+        }
+      }
+    }
+
+    linhas.add(
+      TableRow(
+        children: [
+          _FooterCell('Subtotal ${fornecedor.nome}'),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+          _FooterCell(_currencyFormat.format(fornecedor.subtotalValor)),
+        ],
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey[50],
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+            ),
+            child: Text(
+              fornecedor.nome,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Table(
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              columnWidths: const {
+                0: FixedColumnWidth(120),
+                1: FixedColumnWidth(90),
+                2: FixedColumnWidth(220),
+                3: FixedColumnWidth(140),
+                4: FixedColumnWidth(150),
+                5: FixedColumnWidth(150),
+                6: FixedColumnWidth(180),
+                7: FixedColumnWidth(160),
+              },
+              children: linhas,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String texto;
+
+  const _HeaderCell(this.texto);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _BodyCell extends StatelessWidget {
+  final String texto;
+
+  const _BodyCell(this.texto);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(fontSize: 13),
+      ),
+    );
+  }
+}
+
+class _FooterCell extends StatelessWidget {
+  final String texto;
+
+  const _FooterCell(this.texto);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      alignment: Alignment.centerRight,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(
+          top: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

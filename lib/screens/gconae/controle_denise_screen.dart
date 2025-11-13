@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/ano_letivo.dart';
 import 'ano_letivo_detail_screen.dart';
+import 'controle_saldo_contrato_screen.dart';
 
 class ControleDeniseScreen extends StatelessWidget {
   final AnoLetivo anoLetivo;
@@ -55,16 +56,33 @@ class ControleDeniseScreen extends StatelessWidget {
                     },
                   ),
                   _OptionCard(
-                    icon: Icons.dashboard_customize_outlined,
-                    title: 'Controle',
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Controle Orçamentário',
                     description:
-                        'Área reservada para controles adicionais do GPAE.',
+                        'Monitore previsões e execuções orçamentárias relacionadas às aquisições.',
                     color: Colors.deepPurple,
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content:
-                              Text('Funcionalidade de controle ainda em desenvolvimento.'),
+                          content: Text(
+                            'Controle Orçamentário ainda em desenvolvimento.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _OptionCard(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'Controle de Saldo de Contrato',
+                    description:
+                        'Acompanhe o saldo disponível nos contratos vigentes para cada produto.',
+                    color: Colors.brown,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ControleSaldoContratoScreen(
+                            anoLetivo: anoLetivo,
+                          ),
                         ),
                       );
                     },

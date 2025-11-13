@@ -18,6 +18,7 @@ import '../../services/excel_generator.dart';
 import '../../services/pdf_generator.dart';
 import '../diae/widgets/memoria_calculo_detail_dialog.dart';
 import 'distribuicoes_por_ano_screen.dart';
+import 'memoria_calculo_qtd_screen.dart';
 import 'widgets/criar_memoria_calculo_dialog.dart';
 import 'widgets/dados_alunos_regiao_widget.dart';
 
@@ -718,6 +719,16 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
+                                        icon: const Icon(
+                                          Icons.receipt_long_outlined,
+                                          size: 20,
+                                        ),
+                                        tooltip:
+                                            'Gerenciar Quadros Técnicos Descritivos',
+                                        onPressed: () =>
+                                            _abrirGestaoQtd(memoria),
+                                      ),
+                                      IconButton(
                                         icon: Icon(
                                           memoria.disponibilizadaParaDiae
                                               ? Icons.cloud_done
@@ -913,6 +924,21 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
         }
       }
     }
+  }
+
+  void _abrirGestaoQtd(MemoriaCalculo memoria) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => MemoriaCalculoQtdScreen(
+              anoLetivo: widget.anoLetivo,
+              memoria: memoria,
+              produtos: produtos,
+              regioes: regioes,
+            ),
+          ),
+        )
+        .then((_) => _carregarDados());
   }
 
   Future<void> _gerarPDFsMemoria(MemoriaCalculo memoria) async {
@@ -1215,10 +1241,25 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
   ) async {
     final novoValor = !memoria.disponibilizadaParaDiae;
     try {
+      final Map<String, StatusProdutoMemoria> statusAtualizados = {
+        ...memoria.statusProdutos,
+      };
+
+      if (novoValor) {
+        for (final produtoId in memoria.produtosSelecionados) {
+          statusAtualizados.putIfAbsent(
+            produtoId,
+            () => StatusProdutoMemoria.emAquisicao,
+          );
+        }
+      }
+
       final db = FirestoreHelper();
-      await db.saveMemoriaCalculo(
-        memoria.copyWith(disponibilizadaParaDiae: novoValor),
+      final memoriaAtualizada = memoria.copyWith(
+        disponibilizadaParaDiae: novoValor,
+        statusProdutos: statusAtualizados,
       );
+      await db.saveMemoriaCalculo(memoriaAtualizada);
 
       if (!mounted) return;
 
@@ -1226,7 +1267,10 @@ class _AnoLetivoDetailScreenState extends State<AnoLetivoDetailScreen> {
         memoriasCalculo = memoriasCalculo
             .map(
               (m) => m.id == memoria.id
-                  ? m.copyWith(disponibilizadaParaDiae: novoValor)
+                  ? m.copyWith(
+                      disponibilizadaParaDiae: novoValor,
+                      statusProdutos: statusAtualizados,
+                    )
                   : m,
             )
             .toList();

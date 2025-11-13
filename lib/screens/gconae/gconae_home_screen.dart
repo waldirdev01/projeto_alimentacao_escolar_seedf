@@ -4,6 +4,8 @@ import '../../database/firestore_helper.dart';
 import '../../models/ano_letivo.dart';
 import 'ano_letivo_overview_screen.dart';
 import 'produtos_screen.dart';
+import 'fornecedores_management_screen.dart';
+import 'fontes_pagamento_management_screen.dart';
 
 class GconaeHomeScreen extends StatefulWidget {
   const GconaeHomeScreen({super.key});
@@ -67,59 +69,56 @@ class _GconaeHomeScreenState extends State<GconaeHomeScreen> {
             ),
             const SizedBox(height: 24),
             // Card de Gerenciamento de Produtos
-            Card(
-              elevation: 3,
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProdutosScreen(),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.teal[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.inventory_2,
-                          size: 32,
-                          color: Colors.teal[700],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Gerenciamento de Produtos para Aquisição',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Gerencie produtos, per capita e valores para aquisição',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
+            _ManagementCard(
+              title: 'Gerenciamento de Produtos para Aquisição',
+              description:
+                  'Gerencie produtos, per capita e valores para aquisição',
+              icon: Icons.inventory_2,
+              iconColor: Colors.teal[700]!,
+              iconBackground: Colors.teal[100]!,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProdutosScreen(),
                   ),
-                ),
-              ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _ManagementCard(
+              title: 'Gerenciamento de Fornecedores',
+              description:
+                  'Cadastre fornecedores, contatos e acompanhe os contratos',
+              icon: Icons.handshake,
+              iconColor: Colors.deepPurple[700]!,
+              iconBackground: Colors.deepPurple[100]!,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FornecedoresManagementScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _ManagementCard(
+              title: 'Gerenciamento de Fontes de Pagamento',
+              description:
+                  'Cadastre fontes de pagamento com valores e observações',
+              icon: Icons.payment,
+              iconColor: Colors.orange[700]!,
+              iconBackground: Colors.orange[100]!,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const FontesPagamentoManagementScreen(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             const Text(
@@ -212,6 +211,75 @@ class _GconaeHomeScreenState extends State<GconaeHomeScreen> {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ManagementCard extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final VoidCallback onTap;
+
+  const _ManagementCard({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 3,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconBackground,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: iconColor,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16),
+            ],
+          ),
         ),
       ),
     );

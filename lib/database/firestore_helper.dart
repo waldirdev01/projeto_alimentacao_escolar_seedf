@@ -3,8 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/quantidades_refeicao_data.dart';
 import '../data/regioes_data.dart';
 import '../models/ano_letivo.dart';
+import '../models/quadro_tecnico_descritivo.dart';
 import '../models/distribuicao.dart';
 import '../models/escola.dart';
+import '../models/fonte_pagamento.dart';
+import '../models/fornecedor.dart';
 import '../models/memoria_calculo.dart';
 import '../models/processo_aquisicao.dart';
 import '../models/produto.dart';
@@ -23,11 +26,15 @@ class FirestoreHelper {
   static const String _regioesCollection = 'regioes';
   static const String _quantidadesRefeicaoCollection = 'quantidades_refeicao';
   static const String _produtosCollection = 'produtos';
+  static const String _fornecedoresCollection = 'fornecedores';
+  static const String _fontesPagamentoCollection = 'fontes_pagamento';
   static const String _escolasCollection = 'escolas';
   static const String _dadosAlunosCollection = 'dados_alunos';
   static const String _distribuicoesCollection = 'distribuicoes';
   static const String _memoriasCalculoCollection = 'memorias_calculo';
   static const String _processosAquisicaoCollection = 'processos_aquisicao';
+  static const String _quadrosTecnicosCollection =
+      'quadros_tecnicos_descritivos';
 
   // Inicializar dados padrão
   Future<void> initializeDefaultData() async {
@@ -163,6 +170,99 @@ class FirestoreHelper {
     await _firestore.collection(_produtosCollection).doc(id).delete();
   }
 
+  // Fornecedores
+  Future<List<Fornecedor>> getFornecedores() async {
+    final snapshot = await _firestore.collection(_fornecedoresCollection).get();
+    return snapshot.docs
+        .map((doc) => Fornecedor.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> saveFornecedor(Fornecedor fornecedor) async {
+    final fornecedorAtualizado = fornecedor.copyWith(
+      criadoEm: DateTime.now(),
+      atualizadoEm: DateTime.now(),
+    );
+
+    await _firestore
+        .collection(_fornecedoresCollection)
+        .doc(fornecedorAtualizado.id)
+        .set(fornecedorAtualizado.toJson());
+  }
+
+  Future<void> updateFornecedor(Fornecedor fornecedor) async {
+    final fornecedorAtualizado =
+        fornecedor.copyWith(atualizadoEm: DateTime.now());
+
+    await _firestore
+        .collection(_fornecedoresCollection)
+        .doc(fornecedorAtualizado.id)
+        .update(fornecedorAtualizado.toJson());
+  }
+
+  Future<void> atualizarStatusFornecedor(String id, bool ativo) async {
+    await _firestore.collection(_fornecedoresCollection).doc(id).update({
+      'ativo': ativo,
+      'atualizadoEm': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> deleteFornecedor(String id) async {
+    await _firestore.collection(_fornecedoresCollection).doc(id).delete();
+  }
+
+  // Fontes de Pagamento
+  Future<List<FontePagamento>> getFontesPagamento() async {
+    final snapshot =
+        await _firestore.collection(_fontesPagamentoCollection).get();
+    return snapshot.docs
+        .map((doc) => FontePagamento.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<List<FontePagamento>> getFontesPagamentoAtivas() async {
+    final snapshot = await _firestore
+        .collection(_fontesPagamentoCollection)
+        .where('ativo', isEqualTo: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => FontePagamento.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> saveFontePagamento(FontePagamento fonte) async {
+    final agora = DateTime.now();
+    final fonteAtualizada = fonte.copyWith(
+      dataCriacao: fonte.id.isEmpty ? agora : fonte.dataCriacao,
+      dataAtualizacao: agora,
+    );
+    await _firestore
+        .collection(_fontesPagamentoCollection)
+        .doc(fonteAtualizada.id)
+        .set(fonteAtualizada.toJson());
+  }
+
+  Future<void> updateFontePagamento(FontePagamento fonte) async {
+    final fonteAtualizada = fonte.copyWith(
+      dataAtualizacao: DateTime.now(),
+    );
+    await _firestore
+        .collection(_fontesPagamentoCollection)
+        .doc(fonteAtualizada.id)
+        .update(fonteAtualizada.toJson());
+  }
+
+  Future<void> toggleFontePagamentoStatus(String id, bool ativo) async {
+    await _firestore.collection(_fontesPagamentoCollection).doc(id).update({
+      'ativo': ativo,
+      'dataAtualizacao': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> deleteFontePagamento(String id) async {
+    await _firestore.collection(_fontesPagamentoCollection).doc(id).delete();
+  }
+
   // Escolas
   Future<List<Escola>> getEscolas() async {
     final snapshot = await _firestore.collection(_escolasCollection).get();
@@ -292,9 +392,13 @@ class FirestoreHelper {
   }
 
   Future<List<MemoriaCalculo>> getMemoriasCalculoDisponibilizadas() async {
-    final todas = await getMemoriasCalculo();
-    return todas
-        .where((memoria) => memoria.disponibilizadaParaDiae)
+    final snapshot = await _firestore
+        .collection(_memoriasCalculoCollection)
+        .where('disponibilizadaParaDiae', isEqualTo: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => MemoriaCalculo.fromJson(doc.data()))
         .toList();
   }
 
@@ -552,5 +656,48 @@ class FirestoreHelper {
   // Deletar processo de aquisição
   Future<void> deleteProcessoAquisicao(String id) async {
     await _firestore.collection(_processosAquisicaoCollection).doc(id).delete();
+  }
+
+  // ==================== QUADRO TÉCNICO DESCRITIVO (QTD) ====================
+
+  Future<void> saveQuadroTecnicoDescritivo(
+    QuadroTecnicoDescritivo quadro,
+  ) async {
+    await _firestore
+        .collection(_quadrosTecnicosCollection)
+        .doc(quadro.id)
+        .set(quadro.toJson());
+  }
+
+  Future<List<QuadroTecnicoDescritivo>> getQuadrosTecnicosPorProcesso(
+    String processoId,
+  ) async {
+    final snapshot = await _firestore
+        .collection(_quadrosTecnicosCollection)
+        .where('processoId', isEqualTo: processoId)
+        .orderBy('dataCriacao')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => QuadroTecnicoDescritivo.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<List<QuadroTecnicoDescritivo>> getQuadrosTecnicosPorMemoria(
+    String memoriaId,
+  ) async {
+    final snapshot = await _firestore
+        .collection(_quadrosTecnicosCollection)
+        .where('memoriaCalculoId', isEqualTo: memoriaId)
+        .orderBy('dataCriacao')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => QuadroTecnicoDescritivo.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> deleteQuadroTecnico(String id) async {
+    await _firestore.collection(_quadrosTecnicosCollection).doc(id).delete();
   }
 }
